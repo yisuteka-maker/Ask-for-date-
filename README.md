@@ -174,14 +174,46 @@
     }
     input:focus { border-color: var(--primary-color); }
 
-    /* Anime GIF Styling */
     .anime-gif {
       width: 100%;
-      max-width: 250px;
+      max-width: 230px;
       border-radius: 15px;
       margin: 10px auto 15px auto;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       display: block;
+    }
+
+    /* Modal for iPhone/Fallback Copy Message */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      z-index: 100;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .modal-box {
+      background: #fff;
+      padding: 25px;
+      border-radius: 20px;
+      text-align: center;
+      max-width: 350px;
+      width: 100%;
+    }
+
+    .msg-preview {
+      background: #f4f4f4;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      color: #333;
+      text-align: left;
+      margin: 15px 0;
+      white-space: pre-wrap;
+      border: 1px dashed var(--primary-color);
     }
   </style>
 </head>
@@ -193,7 +225,7 @@
   <div class="card" id="step1">
     <div class="heart-title-box">
       <div class="heart-text">
-        for yisu<br>to namlet
+      from yisu<br>to namlet
       </div>
     </div>
     <div class="pulse-heart">❤️</div>
@@ -221,12 +253,11 @@
   <div class="card hidden" id="step3">
     <h2>You just made my day! 🥰</h2>
     
-    <!-- የ Anime ጥንዶች እጅ ለእጅ ተያይዘው ሲሄዱ የሚያሳየው አኒሜሽን (GIF) -->
     <img src="https://media.tenor.com/793m7fH3S5AAAAAC/anime-holding-hands.gif" alt="Anime couple holding hands" class="anime-gif">
 
     <p style="margin-bottom: 15px;">Choose our date details below:</p>
     
-    <form id="dateForm" onsubmit="sendToInstagram(event)">
+    <form id="dateForm" onsubmit="handleFormSubmit(event)">
       <div class="form-group">
         <label for="date">Select a Date 📅</label>
         <input type="date" id="date" required>
@@ -246,8 +277,21 @@
     </form>
   </div>
 
+  <!-- Final Modal Popup for Sending Message -->
+  <div class="modal-overlay hidden" id="msgModal">
+    <div class="modal-box">
+      <h3>Ready to Send! 📱✨</h3>
+      <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">Your invitation response is ready:</p>
+      
+      <div class="msg-preview" id="msgPreviewText"></div>
+
+      <button class="btn" onclick="openInstagramDirect()" style="width: 100%;">Send to Yisu on IG 📲</button>
+    </div>
+  </div>
+
   <script>
     const MY_INSTAGRAM_USERNAME = "lan_yisu";
+    let generatedMessage = "";
 
     // Typewriter Effect
     const message = "I have something special prepared just for you...";
@@ -305,17 +349,42 @@
       goToStep(3);
     }
 
-    // Direct IG Message Trigger
-    function sendToInstagram(event) {
+    // Handle Form Submit & Show Preview
+    function handleFormSubmit(event) {
       event.preventDefault();
 
       const date = document.getElementById('date').value;
       const time = document.getElementById('time').value;
       const location = document.getElementById('location').value;
 
-      const textMessage = encodeURIComponent(`Hey Yisu! I'd love to go on a date with you! ❤️\n\n📅 Date: ${date}\n⏰ Time: ${time}\n📍 Place: ${location}`);
+      generatedMessage = `Hey Yisu! I'd love to go on a date with you! ❤️\n\n📅 Date: ${date}\n⏰ Time: ${time}\n📍 Place: ${location}`;
 
-      window.location.href = `https://ig.me/m/${MY_INSTAGRAM_USERNAME}?text=${textMessage}`;
+      document.getElementById('msgPreviewText').innerText = generatedMessage;
+      document.getElementById('msgModal').classList.remove('hidden');
+    }
+
+    // Open Instagram logic supported on iOS (iPhone) and Android
+    function openInstagramDirect() {
+      // Copy text to clipboard
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(generatedMessage);
+      }
+
+      const encodedMsg = encodeURIComponent(generatedMessage);
+
+      // Check if iOS/iPhone
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+      if (isIOS) {
+        // Deep link for iOS app
+        window.location.href = `instagram://user?username=${MY_INSTAGRAM_USERNAME}`;
+        setTimeout(() => {
+          window.location.href = `https://www.instagram.com/direct/t/${MY_INSTAGRAM_USERNAME}/?text=${encodedMsg}`;
+        }, 1500);
+      } else {
+        // Universal direct web link
+        window.location.href = `https://ig.me/m/${MY_INSTAGRAM_USERNAME}?text=${encodedMsg}`;
+      }
     }
   </script>
 </body>
